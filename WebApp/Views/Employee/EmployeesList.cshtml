@@ -1,0 +1,289 @@
+﻿@{
+    ViewBag.Title = "Employee - List of Employees";
+}
+
+@section scripts{
+
+    <script type="text/javascript">
+        //$('#employeeModal').hide();
+        //$('#employeeDialog').hide();
+        $('#myModal').hide();
+        $('#createEmployeeErrorAlert').hide();
+        $('#createEmployeeSuccessAlert').hide();
+
+        function Employee(data) {
+            this.employeeId = ko.observable(data.employeeId);
+            this.firstName = ko.observable(data.firstName);
+            this.lastName = ko.observable(data.lastName);
+            this.email = ko.observable(data.email);
+            this.position = ko.observable(data.position);
+            //Mode is used to determine if the display or edit template will get displayed (default is display when calling data from server.
+            this.mode = ko.observable("display");
+        }
+
+        function EmployeeListViewModel() {
+            //Data
+            //assign the current EmployeeListViewModel instance as 'self' - I think?
+            var self = this;
+            //Initalize employees array (currently empty)
+            self.employees = ko.observableArray([]);
+            self.selectedEmployee = ko.observable(null);
+            self.newFirstNameText = ko.observable();
+            self.newLastNameText = ko.observable();
+            self.newEmailText = ko.observable();
+            self.newPositionText = ko.observable();
+            
+            //OPERATIONS
+            self.createEmployee = function () {
+                var newEmployeeRecord = {
+                    employeeId: ko.observable(0),
+                    firstName: this.newFirstNameText(),
+                    lastName: this.newLastNameText(),
+                    email: this.newEmailText(),
+                    position: this.newPositionText(),
+                    mode: ko.observable("display")
+                };
+
+                $.ajax("/api/employees/create", {
+                    data: ko.toJSON(newEmployeeRecord),
+                    type: "POST", contentType: "application/json",
+                    success: function (id) {
+
+                        //retrieve the employeeId from API and set to the newly added record.
+                        newEmployeeRecord.employeeId(id);
+
+                        //Hide error alert
+                        $('#createEmployeeErrorAlert').hide();
+
+                        //display success alert and set timer
+                        $('#createEmployeeSuccessAlert').show().fadeTo(2000, 500).slideUp(500, function () {
+                            $('#createEmployeeSuccessAlert').slideUp(500);
+                        });
+
+                        //Show 'Add Employee' button
+                        $('#displayCreateFormButton').show().fadeIn();
+
+                        //Hide create employee form
+                        $('#createEmployeeForm').hide().fadeOut();
+
+                        //add employee to employees observable array
+                        self.employees.push(newEmployeeRecord);
+
+                        //Reset Form Values
+                        self.newFirstNameText("");
+                        self.newLastNameText("");
+                        self.newEmailText("");
+                        self.newPositionText("");
+                    },
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        $('#createEmployeeErrorAlert').show();
+                        //alert("There was an error in creating the Employee: " + xhr.status + ", " + xhr.responseText);
+                    }
+                });                
+            };
+
+            self.updateEmployee = function () {
+
+                var updatedEmployeeRecord = {
+                    employeeId: this.employeeId(),
+                    firstName: this.firstName(),
+                    lastName: this.lastName(),
+                    email: this.email(),
+                    position: this.position(),
+                    mode: ko.observable("display")
+                };
+
+                $.ajax("/api/employees/update", {
+                    data: ko.toJSON(updatedEmployeeRecord),
+                    type: "PUT", contentType: "application/json",
+                    success: function () {
+                    },
+                    error: function (ex) { alert("There was an error in creating the Employee!") }
+                });
+            };
+
+            self.selectEmployee = function () {
+                self.selectedEmployee(this);
+            };
+
+            self.showEmployeeEditModal = function () {
+                $("#myModal").modal({
+                    buttons: {
+                        Save: function () { $(this).modal("close"); },
+                        Cancel: function () { $(this).modal("close"); }
+                    }
+                })
+
+                $('#myModal').modal('show');
+            };
+
+            //Overview: Load initial state from server, convert it to Employee instances, then populate self.employees
+            //You use jQuery's $.getJSON function to get JSON data from server by making an ajax request. Another function is $.ajax
+            $.getJSON("/api/employees", function (allData) {
+                //Raw response = allData
+                //This code takes the raw data array by the server and uses jQuery's $.map helper to construct a Employee instance from each raw entry.
+                //  The resulting array of Employee objects is then pushed into the self.empoyees array, which causes the UI to update because it's observable
+                var mappedEmployees = $.map(allData, function (item) { return new Employee(item) });
+                //Populate self.employees with mappedEmployees
+                self.employees(mappedEmployees);
+            });
+
+            //**Delete button on each record (deletes employee from database using API)
+            $(document).on("click", ".kout-delete", function () {
+                var employeeToRemove = ko.dataFor(this);
+
+                $.ajax("/api/employees/delete/id/" + ko.toJSON(employeeToRemove.employeeId), {
+                    type: "DELETE", contentType: "application/json",
+                    success: function () {
+                        self.employees.remove(employeeToRemove);
+                    },
+                    error: function (ex) { alert("There was an error in deleting the Employee!") }
+                });
+
+            });
+
+            //**Displays Create form on 'Add Employee' button click
+            $(document).on("click", ".display-form", function () {
+                $('#displayCreateFormButton').hide().fadeOut();
+                $('#createEmployeeForm').show().fadeIn();
+            });
+
+            //**Cancel button on Create Employee Form
+            $(document).on("click", ".cancel-createForm", function () {
+                $('#displayCreateFormButton').show().fadeIn();
+                $('#createEmployeeForm').hide().fadeOut();
+
+                //Reset Form Values
+                self.newFirstNameText("");
+                self.newLastNameText("");
+                self.newEmailText("");
+                self.newPositionText("");
+            });
+        }
+
+        ko.applyBindings(new EmployeeListViewModel());
+    </script>
+
+    @*The is the default display template (the 'mode' property in ViewModel)*@
+    <script type="text/html" id="display">
+        <td data-bind="text: employeeId"></td>
+        <td data-bind="text: firstName"></td>
+        <td data-bind="text: lastName"></td>
+        <td data-bind="text: email"></td>
+        <td data-bind="text: position"></td>
+        <td>
+            @*<button class="btn btn-success kout-edit">Edit</button>*@
+            <button class="btn btn-success" data-bind="click: $root.showEmployeeEditModal">Edit</button>
+            <button class="btn btn-danger kout-delete">Delete</button>
+        </td>
+    </script>
+}
+
+@*Create Employee Error Alert (Default is Hidden)*@
+<div id="createEmployeeErrorAlert" class="alert alert-danger" role="alert" hidden>
+    <span class="glyphicon glyphicon-exclamation-sign" aria-hidden="true"></span>
+    <span class="sr-only">Error:</span>
+    <strong>Oops! An error occured while creating the Employee. Below is from response from the Web API: </strong>
+</div>
+
+@*Create Employee Success Alert (Default is Hidden)*@
+<div id="createEmployeeSuccessAlert" class="alert alert-success" role="alert" hidden>
+    <span class="glyphicon glyphicon-check" aria-hidden="true"></span>
+    <span class="sr-only">Success</span>
+    <strong>Employee was created successfully!</strong>
+</div>
+
+@*Create Employee Form (Default is Hidden)*@
+<div id="createEmployeeForm" hidden>
+    <form data-bind="submit: createEmployee">
+        <input type="text" data-bind="value: newFirstNameText" placeholder="First Name" required />
+        <input type="text" data-bind="value: newLastNameText" placeholder="Last Name" required />
+        <input type="email" data-bind="value: newEmailText" placeholder="Email" required />
+        <input type="text" data-bind="value: newPositionText" placeholder="Position" required />
+        <button class="btn btn-primary" type="submit">Create</button>
+        <button class="btn btn-default cancel-createForm">Cancel</button>
+    </form>
+</div>
+
+@*Add Employee Button (Default is Show)*@
+<button id="displayCreateFormButton" class="btn btn-primary display-form">Add Employee</button>
+
+<hr />
+
+<table class="table">
+    <tr>
+        <th>
+            Employee Id
+        </th>
+        <th>
+            First Name
+        </th>
+        <th>
+            Last Name
+        </th>
+        <th>
+            Email
+        </th>
+        <th>
+            Position
+        </th>
+        <th></th>
+    </tr>
+
+    @*Loop through the array of employees - employees is intialized as an empty array (self.employees = ko.observableArray([])) and then populated from API*@
+    <tbody data-bind="foreach: employees">
+        @*Load the template for each record - name (the id of an element that contains the template you wish to render) and data (an object to supply as the data for the template to render.)*@
+        <tr data-bind="template: {name: mode, data: $data}, click: $root.selectEmployee"></tr>
+    </tbody>
+</table>
+
+<!--------------------------------------------MODALS-------------------------------------------->
+
+<div class="modal" id="myModal" data-bind="with: selectedEmployee">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Edit Employee</h4>
+            </div>
+            <div class="modal-body">
+                <form>
+                    <div class="form-group">
+                        <label class="control-label col-md-3 col-md-offset-2">Employee Id</label>
+                        <div>
+                            <input type="text" data-bind="value: employeeId" required disabled placeholder="You cannot edit the Employee Id." />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-md-3 col-md-offset-2">First Name</label>
+                        <div>
+                            <input type="text" data-bind="value: firstName" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-md-3 col-md-offset-2">Last Name</label>
+                        <div>
+                            <input type="text" data-bind="value: lastName" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-md-3 col-md-offset-2">Email</label>
+                        <div>
+                            <input type="text" data-bind="value: email" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="control-label col-md-3 col-md-offset-2">Position</label>
+                        <div>
+                            <input type="text" data-bind="value: position" required />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="col-md-3 col-md-offset-2">
+                            <button class="btn btn-primary btn-lg" type="submit" data-bind="submit: updateEmployee">Create</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div> 
+</div>
