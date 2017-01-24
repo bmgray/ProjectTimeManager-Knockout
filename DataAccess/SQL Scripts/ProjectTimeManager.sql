@@ -23,7 +23,7 @@ CREATE TABLE [dbo].[Project](
 
 GO
 
-/****** Object:  Table [dbo].[Employee]    Script Date: 1/21/2017 5:19:52 PM ******/
+/****** Object:  Table [dbo].[Employee]    Script Date: 1/24/2017 5:03:25 PM ******/
 SET ANSI_NULLS ON
 GO
 
@@ -36,6 +36,8 @@ CREATE TABLE [dbo].[Employee](
 	[LastName] [nvarchar](25) NOT NULL,
 	[Email] [nvarchar](100) NOT NULL,
 	[Position] [nvarchar](50) NOT NULL,
+	[DateCreated] [datetime2](7) NOT NULL,
+	[LastModified] [datetime2](7) NOT NULL,
  CONSTRAINT [PK_Employee] PRIMARY KEY CLUSTERED 
 (
 	[Id] ASC
@@ -44,6 +46,11 @@ CREATE TABLE [dbo].[Employee](
 
 GO
 
+ALTER TABLE [dbo].[Employee] ADD  CONSTRAINT [DF__EmployeeCreation_DateCreated__TimeStamp]  DEFAULT (getdate()) FOR [DateCreated]
+GO
+
+ALTER TABLE [dbo].[Employee] ADD  CONSTRAINT [DF__EmployeeCreation_LastModified__TimeStamp]  DEFAULT (getdate()) FOR [LastModified]
+GO
 
 /****** Object:  Table [dbo].[TimeLog]    Script Date: 1/21/2017 5:20:08 PM ******/
 SET ANSI_NULLS ON

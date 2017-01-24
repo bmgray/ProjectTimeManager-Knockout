@@ -67,7 +67,8 @@ namespace WebApp.Controllers.API
             }
             else
             {
-                return Request.CreateResponse(HttpStatusCode.Created, employeeId);
+                var employeeRecord = _repo.GetSingleEmployee(employeeId);
+                return Request.CreateResponse(HttpStatusCode.Created, employeeRecord);
             }
         }
 
@@ -112,8 +113,14 @@ namespace WebApp.Controllers.API
             }
 
             //update
-            _repo.UpdateEmployee(employee);
-            return Request.CreateResponse(HttpStatusCode.OK);
+            var isEmployeeUpdated = _repo.UpdateEmployee(employee);
+
+            if(isEmployeeUpdated == true)
+            {
+                return Request.CreateResponse(HttpStatusCode.OK);
+            }
+
+            return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Employee could not be updated.");
         }
 
 

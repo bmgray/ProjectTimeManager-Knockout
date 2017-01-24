@@ -13,5 +13,7 @@ namespace DataAccess.Dapper_Model_Classes
         public string LastName { get; set; }
         public string Email { get; set; }
         public string Position { get; set; }
+        public DateTime DateCreated { get; set; }
+        public DateTime LastModified { get; set; }
     }
 }

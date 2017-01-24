@@ -50,14 +50,18 @@ namespace DataAccess.Managers
             return false;
         }
 
-        public void UpdateEmployee(Employee employee)
+        public bool UpdateEmployee(Employee employee)
         {
-            string updateStatement = @"UPDATE Employee SET FirstName = @FirstName, LastName = @LastName, Email = @Email, Position = @Position WHERE Id = @Id";
+            string updateStatement = @"UPDATE Employee SET FirstName = @FirstName, LastName = @LastName, Email = @Email, Position = @Position, LastModified = @LastModified WHERE Id = @Id";
 
-            var count = _sqlConnection.Execute(updateStatement, new { FirstName = employee.FirstName, LastName = employee.LastName, Email = employee.Email, Position = employee.Position, Id = employee.Id });
+            var count = _sqlConnection.Execute(updateStatement, new { FirstName = employee.FirstName, LastName = employee.LastName, Email = employee.Email, Position = employee.Position, LastModified = employee.LastModified, Id = employee.Id });
 
-            var record =   _sqlConnection.Query<Employee>("SELECT * FROM Employee WHERE Id = @Id", new { Id = employee.Id }).SingleOrDefault();
+            if(count > 0)
+            {
+                return true;
+            }
 
+            return false;
         }
 
     }

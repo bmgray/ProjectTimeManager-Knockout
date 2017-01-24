@@ -27,7 +27,9 @@ namespace DataBridge.Bridges
                     firstName = employee.FirstName,
                     lastName = employee.LastName,
                     email = employee.Email,
-                    position = employee.Position
+                    position = employee.Position,
+                    dateCreated = employee.DateCreated,
+                    lastModified = employee.LastModified
                 });
             }
 
@@ -58,6 +60,8 @@ namespace DataBridge.Bridges
                 employee.lastName = employeeFromDatabase.LastName;
                 employee.email = employeeFromDatabase.Email;
                 employee.position = employeeFromDatabase.Position;
+                employee.dateCreated = employeeFromDatabase.DateCreated;
+                employee.lastModified = employeeFromDatabase.LastModified;
                 return employee;
             }
             else
@@ -67,6 +71,8 @@ namespace DataBridge.Bridges
                 employee.lastName = "Error: employeeId passed the FindSingleEmployee method, however failed in retrieving the record information.";
                 employee.email = "Error: employeeId passed the FindSingleEmployee method, however failed in retrieving the record information.";
                 employee.position = "Error: employeeId passed the FindSingleEmployee method, however failed in retrieving the record information.";
+                employee.dateCreated = DateTime.Now;
+                employee.lastModified = DateTime.Now;
                 return employee;
             }
         }
@@ -87,20 +93,21 @@ namespace DataBridge.Bridges
             });
         }
 
-        public void UpdateEmployee(EmployeeModel employee)
+        public bool UpdateEmployee(EmployeeModel employee)
         {
             DataAccess.Managers.EmployeeManager employeeManagerForDatabase =
                 new DataAccess.Managers.EmployeeManager();
 
             employee = CheckPropertiesInEmployeeModel(employee);
 
-            employeeManagerForDatabase.UpdateEmployee(new Employee()
+            return employeeManagerForDatabase.UpdateEmployee(new Employee()
             {
                 Id = employee.employeeId,
                 FirstName = employee.firstName,
                 LastName = employee.lastName,
                 Email = employee.email,
-                Position = employee.position
+                Position = employee.position,
+                LastModified = DateTime.Now
             });
         }
 

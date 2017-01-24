@@ -30,5 +30,8 @@ namespace Model.WebAppModels.API
         [MinLength(3, ErrorMessage = "The first name must be at least 3 characters")]
         [MaxLength(50, ErrorMessage = "The position title cannot exceed 50 characters")]
         public string position { get; set; }
+
+        public DateTime dateCreated { get; set; }
+        public DateTime lastModified { get; set; }
     }
 }

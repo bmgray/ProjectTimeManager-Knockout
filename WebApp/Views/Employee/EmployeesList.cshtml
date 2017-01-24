@@ -8,6 +8,7 @@
 @section scripts{
 
     <script type="text/javascript">
+
         $('#editEmployeeModal').hide();
         $('#createEmployeeErrorAlert').hide();
         $('#createEmployeeSuccessAlert').hide();
@@ -18,89 +19,115 @@
             this.lastName = ko.observable(data.lastName);
             this.email = ko.observable(data.email);
             this.position = ko.observable(data.position);
-            //Mode is used to determine if the display or edit template will get displayed (default is display when calling data from server.
+            this.dateCreated = ko.observable(data.dateCreated);
+            this.lastModified = ko.observable(data.lastModified);
+            //Mode is used to determine which template to use - only contain 'display' template as of 1.24.17
             this.mode = ko.observable("display");
         }
 
         function EmployeeListViewModel() {
-            //Data
-            //assign the current EmployeeListViewModel instance as 'self' - I think?
+
+            //**********DATA BEGIN**********
+
             var self = this;
 
-            //Initalize employees array (currently empty)
+            //Initalize employees array.
             self.employees = ko.observableArray([]);
 
-            //Holds the value of the current selected employee
-            //used in the edit form
+            //Holds the value of the current selected employee.
             self.selectedEmployee = ko.observable(null);
+
+            //Holds the value of the current employee being edited.
             self.selectedEmployeeEdit = ko.observable(null);
 
-            //Properties for the create form
+            //Properties for the Employee Create Form
             self.newFirstNameText = ko.observable();
             self.newLastNameText = ko.observable();
             self.newEmailText = ko.observable();
             self.newPositionText = ko.observable();
 
-            //OPERATIONS
+            //**********DATA END************
+
+
+            //**********OPERATIONS BEGIN**********
+
+            //Executed when the Create Employee Form is submitted
             self.createEmployee = function () {
+
+                //Initialize the new employee
                 var newEmployeeRecord = {
                     employeeId: ko.observable(0),
                     firstName: this.newFirstNameText(),
                     lastName: this.newLastNameText(),
                     email: this.newEmailText(),
                     position: this.newPositionText(),
+                    dateCreated: ko.observable(),
+                    lastModified: ko.observable(),
                     mode: ko.observable("display")
                 };
 
+                //Post the employee to the database using an ajax call.
                 $.ajax("/api/employees/create", {
                     data: ko.toJSON(newEmployeeRecord),
                     type: "POST", contentType: "application/json",
-                    success: function (id) {
+                    success: function (newRecord) {
 
-                        //retrieve the employeeId from API and set to the newly added record.
-                        newEmployeeRecord.employeeId(id);
+                        //Intialize the newly added record returned from the server into a new employee instance
+                        //**this will be used to add the new record to self.employees
+                        var newRecordFromServer = new Employee(newRecord);
 
-                        //Hide error alert
+                        //Hide create employee error alert
                         $('#createEmployeeErrorAlert').hide();
 
-                        //display success alert and set timer
+                        //Display create employee success alert as well as set timer.
                         $('#createEmployeeSuccessAlert').show().fadeTo(2000, 500).slideUp(500, function () {
                             $('#createEmployeeSuccessAlert').slideUp(500);
                         });
 
-                        //Show 'Add Employee' button
+                        //Show 'Add Employee' button.
                         $('#displayCreateFormButton').show().fadeIn();
 
-                        //Hide create employee form
+                        //Hide create employee form.
                         $('#createEmployeeForm').hide().fadeOut();
 
-                        //add employee to employees observable array
-                        self.employees.push(newEmployeeRecord);
+                        //Add the newly created employee to self.employees observableArray.
+                        //self.employees.push(newEmployeeRecord);
+                        self.employees.push(newRecordFromServer);
 
-                        //Reset Form Values
+                        //Reset create employee form values.
                         self.newFirstNameText("");
                         self.newLastNameText("");
                         self.newEmailText("");
                         self.newPositionText("");
                     },
                     error: function (xhr, ajaxOptions, thrownError) {
+
+                        //Display create employee alert if an error occurs when posting to the Web API.
                         $('#createEmployeeErrorAlert').show();
-                        //alert("There was an error in creating the Employee: " + xhr.status + ", " + xhr.responseText);
+
+                        alert("There was an error in creating the Employee: " + xhr.status + ", " + xhr.responseText);
                     }
-                });                
+                });
             };
 
-            //Determines which Employee is selected
+            //Executed when a record in the table is selected - determines which Employee is selected (populates self.selectedEmployee).
             self.selectEmployee = function () {
+
+                //Populate self.selectedEmployee depending on the record in the table selected.
                 self.selectedEmployee(this);
 
-                console.log("Selected Employee: " + ko.toJSON(self.selectedEmployee));
+                //console.log("Selected Employee: " + ko.toJSON(self.selectedEmployee));
             };
 
+            //Executed when the 'Edit' button is selected on an employee record - populates self.selectedEmployeeEdit and displays the edit employee modal.
             self.showEmployeeEditModal = function () {
+
+                //Populates self.selectedEmployeeEdit.
                 self.selectedEmployeeEdit(new Employee(ko.toJS(this)));
+
+                //Display the edit employee modal.
                 $('#editEmployeeModal').modal('show');
-                console.log("show modal function triggered.");
+                //console.log("show modal function triggered.");
             };
 
             //Overview: Load initial state from server, convert it to Employee instances, then populate self.employees
@@ -116,50 +143,68 @@
                 console.log("List of employees from API: " + ko.toJSON(self.employees));
             });
 
-            //**Delete button on each record (deletes employee from database using API)
+            //Executed when the 'Delete' button is selected on an employee record - removes the employee from the database as well as from self.employees.          //Delete button on each record (deletes employee from database using API)
             $(document).on("click", ".kout-delete", function () {
+
+                //Set the employee to be removed
                 var employeeToRemove = ko.dataFor(this);
 
+                //Ajax call that removes the employee from the database - you pass the employeeId
                 $.ajax("/api/employees/delete/id/" + ko.toJSON(employeeToRemove.employeeId), {
                     type: "DELETE", contentType: "application/json",
                     success: function () {
+                        //On success remove the employee from self.employees.
                         self.employees.remove(employeeToRemove);
                     },
-                    error: function (ex) { alert("There was an error in deleting the Employee!") }
+                    error: function (xhr, ajaxOptions, thrownError) {
+                        //On error display an alert.
+                        alert("There was an error in creating the Employee: " + xhr.status + ", " + xhr.responseText);
+                    }
                 });
-
             });
 
-            //**Displays Create form on 'Add Employee' button click
+            //Executed when 'Add Employee' button is clicked - displays the create employee form
             $(document).on("click", ".display-form", function () {
+
+                //Hides the 'Add Employee Button'.
                 $('#displayCreateFormButton').hide().fadeOut();
+
+                //Displays the create employee form.
                 $('#createEmployeeForm').show().fadeIn();
             });
 
-            //**Cancel button on Create Employee Form
+            //Executed when the 'Cancel' button on the create employee form is clicked - hides the create employee form, displays the 'Add Employee' button and resets the properties used in the create employee form.
             $(document).on("click", ".cancel-createForm", function () {
+
+                //Display 'Add Employee' button.
                 $('#displayCreateFormButton').show().fadeIn();
+
+                //Hide the create employee form
                 $('#createEmployeeForm').hide().fadeOut();
 
-                //Reset Form Values
+                //Reset create employee form values
                 self.newFirstNameText("");
                 self.newLastNameText("");
                 self.newEmailText("");
                 self.newPositionText("");
             });
 
-            //When the user clicks 'update' button on employee edit form
+            //Executed When the user clicks the 'Update' button on employee edit form
             $(document).on("click", ".update-employeeButton", function () {
 
-                console.log("retrieved updated data: " + ko.toJSON(self.selectedEmployeeEdit));
-                console.log("original data: " + ko.toJSON(self.selectedEmployee));
+                //console.log("retrieved updated data: " + ko.toJSON(self.selectedEmployeeEdit));
+                //console.log("original data: " + ko.toJSON(self.selectedEmployee));
 
+
+                //Ajax call that updates the employee data to the database
                 $.ajax("/api/employees/update/", {
                     data: ko.toJSON(self.selectedEmployeeEdit),
                     type: "PUT", contentType: "application/json",
                     success: function () {
 
+                        //Hide the edit employee form modal
                         $('#editEmployeeModal').hide();
+
                         //self.selectedEmployee = ko.observable(self.selectedEmployeeEdit);
                         //self.selectedEmployeeEdit = ko.observable(null);
                     },
@@ -168,13 +213,17 @@
 
             });
 
-            //when the user clicks the 'cancel' button on employee edit form
+            //Executed when the user clicks the 'Cancel' button on employee edit form
             $(document).on("click", ".cancelUpdate-employeeButton", function () {
+
                 console.log("Edit employee data before: " + ko.toJSON(self.selectedEmployeeEdit));
                 self.selectedEmployeeEdit = ko.observable(null);
+
                 console.log("Cancel update employee!");
                 console.log("Original employee data: " + ko.toJSON(self.selectedEmployee));
                 console.log("Edit employee data after: " + ko.toJSON(self.selectedEmployeeEdit));
+
+                //Hide the employee edit form modal.
                 $('#editEmployeeModal').hide();
             });
         }
@@ -189,6 +238,8 @@
         <td data-bind="text: lastName"></td>
         <td data-bind="text: email"></td>
         <td data-bind="text: position"></td>
+        <td data-bind="text: dateCreated"></td>
+        <td data-bind="text: lastModified"></td>
         <td>
             @*<button class="btn btn-success kout-edit">Edit</button>*@
             <button class="btn btn-success" data-bind="click: $root.showEmployeeEditModal">Edit</button>
@@ -245,6 +296,12 @@
         <th>
             Position
         </th>
+        <th>
+            Date Created
+        </th>
+        <th>
+            Last Modified
+        </th>
         <th></th>
     </tr>
 
@@ -264,43 +321,55 @@
                 <h4 class="modal-title">Edit Employee</h4>
             </div>
             <div class="modal-body">
-                    <div class="form-group">
-                        <label class="control-label col-md-3 col-md-offset-2">Employee Id</label>
-                        <div>
-                            <input type="text" data-bind="value: employeeId" required disabled placeholder="You cannot edit the Employee Id." />
-                        </div>
+                <div class="form-group">
+                    <label class="control-label col-md-3 col-md-offset-2">Employee Id</label>
+                    <div>
+                        <input type="text" data-bind="value: employeeId" required disabled placeholder="You cannot edit the Employee Id." />
                     </div>
-                    <div class="form-group">
-                        <label class="control-label col-md-3 col-md-offset-2">First Name</label>
-                        <div>
-                            <input type="text" data-bind="value: firstName" min="3" maxlength="25" required placeholder="First Name" />
-                        </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-3 col-md-offset-2">First Name</label>
+                    <div>
+                        <input type="text" data-bind="value: firstName" min="3" maxlength="25" required placeholder="First Name" />
                     </div>
-                    <div class="form-group">
-                        <label class="control-label col-md-3 col-md-offset-2">Last Name</label>
-                        <div>
-                            <input type="text" data-bind="value: lastName" min="3" maxlength="25" required placeholder="Last Name" />
-                        </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-3 col-md-offset-2">Last Name</label>
+                    <div>
+                        <input type="text" data-bind="value: lastName" min="3" maxlength="25" required placeholder="Last Name" />
                     </div>
-                    <div class="form-group">
-                        <label class="control-label col-md-3 col-md-offset-2">Email</label>
-                        <div>
-                            <input type="text" data-bind="value: email" maxlength="100" required placeholder="Email" />
-                        </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-3 col-md-offset-2">Email</label>
+                    <div>
+                        <input type="text" data-bind="value: email" maxlength="100" required placeholder="Email" />
                     </div>
-                    <div class="form-group">
-                        <label class="control-label col-md-3 col-md-offset-2">Position</label>
-                        <div>
-                            <input type="text" data-bind="value: position" min="3" maxlength="50" required placeholder="Position"/>
-                        </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-3 col-md-offset-2">Position</label>
+                    <div>
+                        <input type="text" data-bind="value: position" min="3" maxlength="50" required placeholder="Position" />
                     </div>
-                    <div class="form-group">
-                        <div>
-                            <button class="btn btn-primary btn-lg update-employeeButton" type="submit">Update</button>
-                            <button class="btn btn-default cancelUpdate-employeeButton" type="submit">Cancel</button>
-                        </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-3 col-md-offset-2">Date Created</label>
+                    <div>
+                        <input type="text" data-bind="value: dateCreated" required disabled placeholder="You cannot edit the date created field." />
                     </div>
+                </div>
+                <div class="form-group">
+                    <label class="control-label col-md-3 col-md-offset-2">Last Modified</label>
+                    <div>
+                        <input type="text" data-bind="value: lastModified" required disabled placeholder="You cannot edit the last modified field." />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div>
+                        <button class="btn btn-primary btn-lg update-employeeButton" type="submit">Update</button>
+                        <button class="btn btn-default cancelUpdate-employeeButton" type="submit">Cancel</button>
+                    </div>
+                </div>
             </div>
         </div>
-    </div> 
+    </div>
 </div>

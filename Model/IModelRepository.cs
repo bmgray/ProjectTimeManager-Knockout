@@ -19,7 +19,7 @@ namespace Model
         bool FindEmployee(int employeeId);
         EmployeeModel GetSingleEmployee(int employeeId);
         int CreateEmployee(EmployeeModel employee);
-        void UpdateEmployee(EmployeeModel employee);
+        bool UpdateEmployee(EmployeeModel employee);
         bool DeleteEmployee(int employeeId);
     }
 }

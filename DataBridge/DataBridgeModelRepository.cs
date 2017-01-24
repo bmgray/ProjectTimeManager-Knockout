@@ -52,9 +52,9 @@ namespace DataBridge
             return new EmployeeBridge().CreateEmployee(employee);
         }
 
-        public void UpdateEmployee(EmployeeModel employee)
+        public bool UpdateEmployee(EmployeeModel employee)
         {
-            new EmployeeBridge().UpdateEmployee(employee);
+           return new EmployeeBridge().UpdateEmployee(employee);
         }
 
         public bool DeleteEmployee(int employeeId)
