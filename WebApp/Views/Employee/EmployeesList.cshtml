@@ -5,9 +5,7 @@
 @section scripts{
 
     <script type="text/javascript">
-        //$('#employeeModal').hide();
-        //$('#employeeDialog').hide();
-        $('#myModal').hide();
+        $('#editEmployeeModal').hide();
         $('#createEmployeeErrorAlert').hide();
         $('#createEmployeeSuccessAlert').hide();
 
@@ -25,14 +23,21 @@
             //Data
             //assign the current EmployeeListViewModel instance as 'self' - I think?
             var self = this;
+
             //Initalize employees array (currently empty)
             self.employees = ko.observableArray([]);
+
+            //Holds the value of the current selected employee
+            //used in the edit form
             self.selectedEmployee = ko.observable(null);
+            self.selectedEmployeeEdit = ko.observable(null);
+
+            //Properties for the create form
             self.newFirstNameText = ko.observable();
             self.newLastNameText = ko.observable();
             self.newEmailText = ko.observable();
             self.newPositionText = ko.observable();
-            
+
             //OPERATIONS
             self.createEmployee = function () {
                 var newEmployeeRecord = {
@@ -102,19 +107,17 @@
                 });
             };
 
+            //Determines which Employee is selected
             self.selectEmployee = function () {
                 self.selectedEmployee(this);
+
+                console.log("Selected Employee: " + ko.toJSON(self.selectedEmployee));
             };
 
             self.showEmployeeEditModal = function () {
-                $("#myModal").modal({
-                    buttons: {
-                        Save: function () { $(this).modal("close"); },
-                        Cancel: function () { $(this).modal("close"); }
-                    }
-                })
-
-                $('#myModal').modal('show');
+                self.selectedEmployeeEdit(new Employee(ko.toJS(this)));
+                $('#editEmployeeModal').modal('show');
+                console.log("show modal function triggered.");
             };
 
             //Overview: Load initial state from server, convert it to Employee instances, then populate self.employees
@@ -126,6 +129,8 @@
                 var mappedEmployees = $.map(allData, function (item) { return new Employee(item) });
                 //Populate self.employees with mappedEmployees
                 self.employees(mappedEmployees);
+
+                console.log("List of employees from API: " + ko.toJSON(self.employees));
             });
 
             //**Delete button on each record (deletes employee from database using API)
@@ -158,6 +163,23 @@
                 self.newLastNameText("");
                 self.newEmailText("");
                 self.newPositionText("");
+            });
+
+            //When the user clicks 'update' button on employee edit form
+            $(document).on("click", ".update-employeeButton", function () {
+                var employeeToUpdate = ko.dataFor(this);
+                console.log("Updated employee info: " + ko.toJSON(employeeToUpdate));
+                console.log("Original employee info: " + ko.toJSON(self.selectedEmployeeEdit));
+                $('#editEmployeeModal').hide();
+            });
+
+            //when the user clicks the 'cancel' button on employee edit form
+            $(document).on("click", ".cancelUpdate-employeeButton", function () {
+                self.selectedEmployeeEdit = ko.observable(null);
+                console.log("Cancel update employee!");
+                console.log("Original employee data: " + ko.toJSON(self.selectedEmployee));
+                console.log("Edit employee data: " + ko.toJSON(self.selectedEmployeeEdit));
+                $('#editEmployeeModal').hide();
             });
         }
 
@@ -239,14 +261,13 @@
 
 <!--------------------------------------------MODALS-------------------------------------------->
 
-<div class="modal" id="myModal" data-bind="with: selectedEmployee">
+<div class="modal" id="editEmployeeModal" data-bind="with: selectedEmployeeEdit" data-dismiss="modal" data-backdrop="false" @*data-toggle="modal" data-backdrop="static" data-keyboard="false"*@>
     <div class="modal-dialog modal-lg" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h4 class="modal-title">Edit Employee</h4>
             </div>
             <div class="modal-body">
-                <form>
                     <div class="form-group">
                         <label class="control-label col-md-3 col-md-offset-2">Employee Id</label>
                         <div>
@@ -278,11 +299,11 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <div class="col-md-3 col-md-offset-2">
-                            <button class="btn btn-primary btn-lg" type="submit" data-bind="submit: updateEmployee">Create</button>
+                        <div>
+                            <button class="btn btn-primary btn-lg update-employeeButton" type="submit">Update</button>
+                            <button class="btn btn-default cancelUpdate-employeeButton" type="submit">Cancel</button>
                         </div>
                     </div>
-                </form>
             </div>
         </div>
     </div> 
