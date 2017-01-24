@@ -2,6 +2,9 @@
     ViewBag.Title = "Employee - List of Employees";
 }
 
+@Scripts.Render("~/bundles/jqueryval")
+<script src="~/Scripts/jquery.validate.js"></script>
+
 @section scripts{
 
     <script type="text/javascript">
@@ -87,26 +90,6 @@
                 });                
             };
 
-            self.updateEmployee = function () {
-
-                var updatedEmployeeRecord = {
-                    employeeId: this.employeeId(),
-                    firstName: this.firstName(),
-                    lastName: this.lastName(),
-                    email: this.email(),
-                    position: this.position(),
-                    mode: ko.observable("display")
-                };
-
-                $.ajax("/api/employees/update", {
-                    data: ko.toJSON(updatedEmployeeRecord),
-                    type: "PUT", contentType: "application/json",
-                    success: function () {
-                    },
-                    error: function (ex) { alert("There was an error in creating the Employee!") }
-                });
-            };
-
             //Determines which Employee is selected
             self.selectEmployee = function () {
                 self.selectedEmployee(this);
@@ -167,18 +150,31 @@
 
             //When the user clicks 'update' button on employee edit form
             $(document).on("click", ".update-employeeButton", function () {
-                var employeeToUpdate = ko.dataFor(this);
-                console.log("Updated employee info: " + ko.toJSON(employeeToUpdate));
-                console.log("Original employee info: " + ko.toJSON(self.selectedEmployeeEdit));
-                $('#editEmployeeModal').hide();
+
+                console.log("retrieved updated data: " + ko.toJSON(self.selectedEmployeeEdit));
+                console.log("original data: " + ko.toJSON(self.selectedEmployee));
+
+                $.ajax("/api/employees/update/", {
+                    data: ko.toJSON(self.selectedEmployeeEdit),
+                    type: "PUT", contentType: "application/json",
+                    success: function () {
+
+                        $('#editEmployeeModal').hide();
+                        //self.selectedEmployee = ko.observable(self.selectedEmployeeEdit);
+                        //self.selectedEmployeeEdit = ko.observable(null);
+                    },
+                    error: function (xhr) { alert("There was an error in creating the Employee: " + xhr.status + ", " + xhr.responseText); }
+                });
+
             });
 
             //when the user clicks the 'cancel' button on employee edit form
             $(document).on("click", ".cancelUpdate-employeeButton", function () {
+                console.log("Edit employee data before: " + ko.toJSON(self.selectedEmployeeEdit));
                 self.selectedEmployeeEdit = ko.observable(null);
                 console.log("Cancel update employee!");
                 console.log("Original employee data: " + ko.toJSON(self.selectedEmployee));
-                console.log("Edit employee data: " + ko.toJSON(self.selectedEmployeeEdit));
+                console.log("Edit employee data after: " + ko.toJSON(self.selectedEmployeeEdit));
                 $('#editEmployeeModal').hide();
             });
         }
@@ -277,25 +273,25 @@
                     <div class="form-group">
                         <label class="control-label col-md-3 col-md-offset-2">First Name</label>
                         <div>
-                            <input type="text" data-bind="value: firstName" required />
+                            <input type="text" data-bind="value: firstName" min="3" maxlength="25" required placeholder="First Name" />
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="control-label col-md-3 col-md-offset-2">Last Name</label>
                         <div>
-                            <input type="text" data-bind="value: lastName" required />
+                            <input type="text" data-bind="value: lastName" min="3" maxlength="25" required placeholder="Last Name" />
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="control-label col-md-3 col-md-offset-2">Email</label>
                         <div>
-                            <input type="text" data-bind="value: email" required />
+                            <input type="text" data-bind="value: email" maxlength="100" required placeholder="Email" />
                         </div>
                     </div>
                     <div class="form-group">
                         <label class="control-label col-md-3 col-md-offset-2">Position</label>
                         <div>
-                            <input type="text" data-bind="value: position" required />
+                            <input type="text" data-bind="value: position" min="3" maxlength="50" required placeholder="Position"/>
                         </div>
                     </div>
                     <div class="form-group">

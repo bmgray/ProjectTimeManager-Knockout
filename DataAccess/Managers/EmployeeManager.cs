@@ -54,7 +54,10 @@ namespace DataAccess.Managers
         {
             string updateStatement = @"UPDATE Employee SET FirstName = @FirstName, LastName = @LastName, Email = @Email, Position = @Position WHERE Id = @Id";
 
-            _sqlConnection.Execute(updateStatement, new { FirstName = employee.FirstName, LastName = employee.LastName, Email = employee.Email, Position = employee.Position });
+            var count = _sqlConnection.Execute(updateStatement, new { FirstName = employee.FirstName, LastName = employee.LastName, Email = employee.Email, Position = employee.Position, Id = employee.Id });
+
+            var record =   _sqlConnection.Query<Employee>("SELECT * FROM Employee WHERE Id = @Id", new { Id = employee.Id }).SingleOrDefault();
+
         }
 
     }

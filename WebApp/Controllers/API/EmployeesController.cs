@@ -58,7 +58,7 @@ namespace WebApp.Controllers.API
 
                 return Request.CreateErrorResponse(HttpStatusCode.BadRequest, modelStateError);
             }
-
+            
             int employeeId = _repo.CreateEmployee(employee);
 
             if(employeeId == 0)
@@ -89,31 +89,32 @@ namespace WebApp.Controllers.API
             return Request.CreateResponse(HttpStatusCode.OK, "The employee has been deleted (employeeId: " + employeeId + ").");
         }
 
-        //[Route("update")]
-        //public HttpResponseMessage UpdateEmployee([FromBody] EmployeeModel employee)
-        //{
-        //    if (employee == null)
-        //    {
-        //        return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Could not read data from body.");
-        //    }
+        [HttpPut]
+        [Route("update")]
+        public HttpResponseMessage UpdateEmployee([FromBody] EmployeeModel employee)
+        {
+            if (employee == null)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, "Could not read data from body.");
+            }
 
-        //    if (!ModelState.IsValid)
-        //    {
-        //        string modelStateError = "The model state is invalid: ";
-        //        modelStateError += string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)) + ".";
+            if (!ModelState.IsValid)
+            {
+                string modelStateError = "The model state is invalid: ";
+                modelStateError += string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)) + ".";
 
-        //        return Request.CreateErrorResponse(HttpStatusCode.BadRequest, modelStateError);
-        //    }
+                return Request.CreateErrorResponse(HttpStatusCode.BadRequest, modelStateError);
+            }
 
-        //    if (_repo.FindEmployee(employee.employeeId) == false)
-        //    {
-        //        return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Employee could not be found using the passed employeeId.");
-        //    }
+            if (_repo.FindEmployee(employee.employeeId) == false)
+            {
+                return Request.CreateErrorResponse(HttpStatusCode.NotFound, "Employee could not be found using the passed employeeId.");
+            }
 
-        //    //update
-        //    _repo.UpdateEmployee(employee);
-        //    return Request.CreateResponse(HttpStatusCode.OK);
-        //}
+            //update
+            _repo.UpdateEmployee(employee);
+            return Request.CreateResponse(HttpStatusCode.OK);
+        }
 
 
     }

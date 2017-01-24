@@ -76,6 +76,8 @@ namespace DataBridge.Bridges
             DataAccess.Managers.EmployeeManager employeeManagerForDatabase =
                 new DataAccess.Managers.EmployeeManager();
 
+            employee = CheckPropertiesInEmployeeModel(employee);
+
             return employeeManagerForDatabase.CreateEmployee(new Employee()
             {
                 FirstName = employee.firstName,
@@ -90,8 +92,11 @@ namespace DataBridge.Bridges
             DataAccess.Managers.EmployeeManager employeeManagerForDatabase =
                 new DataAccess.Managers.EmployeeManager();
 
+            employee = CheckPropertiesInEmployeeModel(employee);
+
             employeeManagerForDatabase.UpdateEmployee(new Employee()
             {
+                Id = employee.employeeId,
                 FirstName = employee.firstName,
                 LastName = employee.lastName,
                 Email = employee.email,
@@ -105,6 +110,17 @@ namespace DataBridge.Bridges
                 new DataAccess.Managers.EmployeeManager();
 
             return employeeManagerForDatabase.DeleteEmployee(employeeId);
+        }
+
+        public EmployeeModel CheckPropertiesInEmployeeModel(EmployeeModel employee)
+        {
+            //Removes excess spacing in front and behind the string
+            employee.firstName = employee.firstName.Trim();
+            employee.lastName = employee.lastName.Trim();
+            employee.email = employee.email.Trim();
+            employee.position = employee.position.Trim();
+
+            return employee;
         }
     }
 }
