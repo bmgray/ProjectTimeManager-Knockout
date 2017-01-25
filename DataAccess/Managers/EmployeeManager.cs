@@ -7,6 +7,13 @@ namespace DataAccess.Managers
 {
     public class EmployeeManager : _ManagerBase
     {
+        public bool CheckForEmployees()
+        {
+            var check = _sqlConnection.Query<Employee>("SELECT * FROM Employee").Any();
+
+            return check;
+        }
+
         public IEnumerable<Employee> GetAllEmployees()
         {
             return _sqlConnection.Query<Employee>("SELECT * FROM Employee").ToList();
@@ -19,7 +26,7 @@ namespace DataAccess.Managers
             if (employee == null)
             {
                 return false;
-            }
+            }           
 
             return true;
         }

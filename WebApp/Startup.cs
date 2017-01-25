@@ -9,6 +9,15 @@ namespace WebApp
         public void Configuration(IAppBuilder app)
         {
             ConfigureAuth(app);
+
+            SeedData();
+        }
+
+        private void SeedData()
+        {
+            DataAccess.DatabaseSeeder databaseSeeder = new DataAccess.DatabaseSeeder();
+
+            databaseSeeder.SeedData();
         }
     }
 }

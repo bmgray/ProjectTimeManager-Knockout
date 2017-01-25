@@ -13,6 +13,12 @@ namespace DataAccess.Managers
 {
     public class ProjectManager : _ManagerBase
     {
+        public bool CheckForProjects()
+        {
+            var check = _sqlConnection.Query<Project>("SELECT * FROM Project").Any();
+            return check;
+        }
+
         public IEnumerable<Project> GetProjects()
         {
             return _sqlConnection.Query<Project>("SELECT * FROM Project").ToList();
@@ -33,6 +39,15 @@ namespace DataAccess.Managers
         public Project GetSingleProject(int projectId)
         {
             return _sqlConnection.Query<Project>("SELECT * FROM Project WHERE ProjectId = @ProjectId", new { ProjectId = projectId }).SingleOrDefault();
+        }
+
+        public int CreateProject(Project project)
+        {
+            string insertStatement = @"INSERT Project([Name], [Description]) VALUES (@Name, @Description); SELECT CAST(SCOPE_IDENTITY() as int)";
+
+            var employeeId = _sqlConnection.Query<int>(insertStatement, new { Name = project.Name, Description = project.Description }).SingleOrDefault();
+
+            return employeeId;
         }
     }
 }

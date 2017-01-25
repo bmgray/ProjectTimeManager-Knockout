@@ -47,6 +47,7 @@
     <Compile Include="Dapper Model Classes\Employee.cs" />
     <Compile Include="Dapper Model Classes\Project.cs" />
     <Compile Include="Dapper Model Classes\TimeLog.cs" />
+    <Compile Include="DatabaseSeeder.cs" />
     <Compile Include="Managers\EmployeeManager.cs" />
     <Compile Include="Managers\ProjectManager.cs" />
     <Compile Include="Managers\_ManagerBase.cs" />
@@ -56,6 +57,10 @@
     <ProjectReference Include="..\Global\Global.csproj">
       <Project>{DC348994-9788-43FD-9631-5C95227C643F}</Project>
       <Name>Global</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\Model\Model.csproj">
+      <Project>{36AF225B-C3EE-41BA-929D-659930EC96F8}</Project>
+      <Name>Model</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
